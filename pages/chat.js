@@ -12,14 +12,13 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function escutaMensagensEmTempoReal(adicionaMensagem) {
     return supabaseClient
         .from('mensagens')
-        .on('INSERT', ({ respostaLive }) => {
-            adicionaMensagem(respostaLive);
+        .on('INSERT', (respostaLive) => {
+            adicionaMensagem(respostaLive.new);
         })
         .subscribe();
 }
 
 export default function ChatPage() {
-    // Sua lógica vai aqui
     const roteamento = useRouter();
     const usuarioLogado = roteamento.query.username;
     const [mensagem, setMensagem] = React.useState('');
@@ -60,6 +59,7 @@ export default function ChatPage() {
 
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
+            // id: listaDeMensagens.length + 1,
             de: usuarioLogado,
             texto: novaMensagem,
         };
@@ -67,14 +67,15 @@ export default function ChatPage() {
         supabaseClient
             .from('mensagens')
             .insert([
+                // Tem que ser um objeto com os MESMOS CAMPOS que você escreveu no supabase
                 mensagem
             ])
             .then(({ data }) => {
                 console.log('Criando mensagem: ', data);
             });
+
         setMensagem('');
     }
-
     return (
         <Box
             styleSheet={{
@@ -94,8 +95,8 @@ export default function ChatPage() {
                     borderRadius: '5px',
                     backgroundColor: appConfig.theme.colors.neutrals[700],
                     height: '100%',
-                    maxWidth: '50%',
-                    maxHeight: '70vh',
+                    maxWidth: '95%',
+                    maxHeight: '95vh',
                     padding: '32px',
                 }}
             >
@@ -112,9 +113,14 @@ export default function ChatPage() {
                         padding: '16px',
                     }}
                 >
-
                     <MessageList mensagens={listaDeMensagens} />
-
+                    {/* {listaDeMensagens.map((mensagemAtual) => {
+                          return (
+                              <li key={mensagemAtual.id}>
+                                  {mensagemAtual.de}: {mensagemAtual.texto}
+                              </li>
+                          )
+                      })} */}
                     <Box
                         as="form"
                         styleSheet={{
@@ -150,7 +156,7 @@ export default function ChatPage() {
                         {/* CallBack */}
                         <ButtonSendSticker
                             onStickerClick={(sticker) => {
-                                console.log('Salva este sticker no banco');
+                                // console.log('[USANDO O COMPONENTE] Salva esse sticker no banco', sticker);
                                 handleNovaMensagem(':sticker: ' + sticker);
                             }}
                         />
@@ -160,7 +166,6 @@ export default function ChatPage() {
         </Box>
     )
 }
-
 function Header() {
     return (
         <>
@@ -180,12 +185,11 @@ function Header() {
 }
 
 function MessageList(props) {
-    console.log('MessageList', props);
     return (
         <Box
             tag="ul"
             styleSheet={{
-                overflow: 'hidden',
+                overflowX: 'hidden',
                 display: 'flex',
                 flexDirection: 'column-reverse',
                 flex: 1,
@@ -242,8 +246,7 @@ function MessageList(props) {
                                     styleSheet={{
                                         maxWidth: '100px',
                                     }}
-                                    src={mensagem.texto.replace(':sticker:', '')}
-                                />
+                                    src={mensagem.texto.replace(':sticker:', '')} />
                             )
                             : (
                                 mensagem.texto
